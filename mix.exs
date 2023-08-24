@@ -35,7 +35,10 @@ defmodule PhoenixPubsubPartisan.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:ex_doc, ">= 0.0.0", only: :dev, runtime: false}
+      {:phoenix_pubsub, "~> 2.0"},
+      {:partisan, git: "https://github.com/lasp-lang/partisan.git"},
+      {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
+      {:elixir_uuid, "~> 1.2"}
     ]
   end
 end
