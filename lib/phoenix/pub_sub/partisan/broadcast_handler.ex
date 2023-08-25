@@ -3,7 +3,7 @@ defmodule Phoenix.PubSub.Partisan.BroadcastHandler do
 
   # Return a two-tuple of message id and payload from a given broadcast
   def broadcast_data(%{id: id} = data) do
-    :ets.insert(:partisan_broadcast_messages, {id, nil})
+    :ets.insert(:partisan_broadcast_messages, {id, data})
     {id, data}
   end
 
@@ -16,7 +16,7 @@ defmodule Phoenix.PubSub.Partisan.BroadcastHandler do
   # Given the message id and payload, merge the message in the local state.
   # If the message has already been received return `false', otherwise return `true'
   def merge(id, %{message: message, pubsub_name: pubsub_name, topic: topic} = _payload) do
-    case :ets.lookup(:partisan_broadcast_messages, message.id) do
+    case :ets.lookup(:partisan_broadcast_messages, id) do
       [] ->
         false
 
@@ -31,8 +31,8 @@ defmodule Phoenix.PubSub.Partisan.BroadcastHandler do
 
   # Return true if the message (given the message id) has already been received.
   # `false' otherwise
-  def is_stale(message) do
-    case :ets.lookup(:partisan_broadcast_messages, message.id) do
+  def is_stale(id) do
+    case :ets.lookup(:partisan_broadcast_messages, id) do
       [] -> false
       _ -> true
     end
@@ -41,8 +41,11 @@ defmodule Phoenix.PubSub.Partisan.BroadcastHandler do
   # Return the message associated with the given message id. In some cases a
   # message has already been sent with information that subsumes the message
   # associated with the given message id. In this case, `stale' is returned.
-  def graft(message) do
-    {:ok, message}
+  def graft(id) do
+    case :ets.lookup(:partisan_broadcast_messages, id) do
+      [] -> :stale
+      _ -> true
+    end
   end
 
   # Trigger an exchange between the local handler and the handler on the given
