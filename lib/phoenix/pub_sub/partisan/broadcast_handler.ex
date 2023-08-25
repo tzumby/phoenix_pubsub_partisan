@@ -3,6 +3,7 @@ defmodule Phoenix.PubSub.Partisan.BroadcastHandler do
 
   # Return a two-tuple of message id and payload from a given broadcast
   def broadcast_data(%{id: id} = data) do
+    :ets.insert(:partisan_broadcast_messages, {id, nil})
     {id, data}
   end
 
@@ -25,7 +26,10 @@ defmodule Phoenix.PubSub.Partisan.BroadcastHandler do
   # Return true if the message (given the message id) has already been received.
   # `false' otherwise
   def is_stale(message) do
-    false
+    case :ets.lookup(:partisan_broadcast_messages, message.id) do
+      [] -> false
+      _ -> true
+    end
   end
 
   # Return the message associated with the given message id. In some cases a

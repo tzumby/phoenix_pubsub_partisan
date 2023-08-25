@@ -32,6 +32,8 @@ defmodule Phoenix.PubSub.Partisan do
       pubsub_name: opts[:name]
     }
 
+    :ets.new(:partisan_broadcast_messages, [:set, :public, :named_table])
+
     {:ok, state}
   end
 
