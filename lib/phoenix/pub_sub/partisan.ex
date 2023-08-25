@@ -32,9 +32,12 @@ defmodule Phoenix.PubSub.Partisan do
       pubsub_name: opts[:name]
     }
 
-    :ets.new(:partisan_broadcast_messages, [:set, :public, :named_table])
+    {:ok, state, {:continue, :create_tables}}
+  end
 
-    {:ok, state}
+  def handle_continue(:create_tables, state) do
+    :ets.new(:partisan_broadcast_messages, [:set, :public, :named_table])
+    {:noreply, state}
   end
 
   @doc false
