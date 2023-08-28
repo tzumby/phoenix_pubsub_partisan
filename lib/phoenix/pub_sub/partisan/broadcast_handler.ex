@@ -16,7 +16,7 @@ defmodule Phoenix.PubSub.Partisan.BroadcastHandler do
   # If the message has already been received return `false', otherwise return `true'
   def merge(id, %{message: message, pubsub_name: pubsub_name, topic: topic} = payload) do
     case :ets.lookup(:partisan_broadcast_messages, id) do
-      result when result != [] ->
+      result when is_list(result) and length(result) > 0 ->
         false
 
       _ ->
@@ -34,7 +34,7 @@ defmodule Phoenix.PubSub.Partisan.BroadcastHandler do
   # `false' otherwise
   def is_stale(id) do
     case :ets.lookup(:partisan_broadcast_messages, id) do
-      result when result != [] -> true
+      result when is_list(result) and length(result) > 0 -> true
       _ -> false
     end
   end
