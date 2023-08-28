@@ -3,7 +3,6 @@ defmodule Phoenix.PubSub.Partisan.BroadcastHandler do
 
   # Return a two-tuple of message id and payload from a given broadcast
   def broadcast_data(%{id: id} = data) do
-    :ets.insert(:partisan_broadcast_messages, {id, data})
     {id, data}
   end
 
@@ -15,25 +14,21 @@ defmodule Phoenix.PubSub.Partisan.BroadcastHandler do
 
   # Given the message id and payload, merge the message in the local state.
   # If the message has already been received return `false', otherwise return `true'
-  def merge(id, %{message: message, pubsub_name: pubsub_name, topic: topic} = _payload) do
-    case :ets.lookup(:partisan_broadcast_messages, id) do
-      [] ->
-        false
+  def merge(id, %{message: message, pubsub_name: pubsub_name, topic: topic} = payload) do
+    :ets.insert(:partisan_broadcast_messages, {id, payload})
 
-      _ ->
-        Registry.dispatch(pubsub_name, topic, fn entries ->
-          for {pid, _} <- entries, do: send(pid, {:broadcast, message})
-        end)
+    Registry.dispatch(pubsub_name, topic, fn entries ->
+      for {pid, _} <- entries, do: send(pid, {:broadcast, message})
+    end)
 
-        true
-    end
+    true
   end
 
   # Return true if the message (given the message id) has already been received.
   # `false' otherwise
   def is_stale(id) do
     case :ets.lookup(:partisan_broadcast_messages, id) do
-      [] -> false
+      result when result != [] -> false
       _ -> true
     end
   end
@@ -43,8 +38,8 @@ defmodule Phoenix.PubSub.Partisan.BroadcastHandler do
   # associated with the given message id. In this case, `stale' is returned.
   def graft(id) do
     case :ets.lookup(:partisan_broadcast_messages, id) do
-      [] -> :stale
-      _ -> true
+      [{_message_id, payload}, _] -> payload
+      _ -> nil
     end
   end
 
@@ -56,7 +51,7 @@ defmodule Phoenix.PubSub.Partisan.BroadcastHandler do
   # The exchange does not need to account for messages in-flight when it is
   # started or broadcast during its operation. These can be taken care of in
   # future exchanges.
-  def exchange(node) do
+  def exchange(_node) do
     :ignore
   end
 end
