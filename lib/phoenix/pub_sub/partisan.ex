@@ -49,7 +49,7 @@ defmodule Phoenix.PubSub.Partisan do
 
   def handle_cast({:broadcast, message}, state) do
     :partisan_plumtree_broadcast.broadcast(
-      Map.merge(message, %{id: UUID.uuid4(), pubsub_name: state.pubsub_name}),
+      Map.merge(message, %{pubsub_name: state.pubsub_name}),
       BroadcastHandler
     )
 
