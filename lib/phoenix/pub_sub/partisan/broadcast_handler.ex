@@ -16,10 +16,7 @@ defmodule Phoenix.PubSub.Partisan.BroadcastHandler do
   # If the message has already been received return `false', otherwise return `true'
   def merge(id, %{message: message, pubsub_name: pubsub_name, topic: topic} = payload) do
     case :ets.lookup(:partisan_broadcast_messages, id) do
-      result when is_list(result) and length(result) > 0 ->
-        false
-
-      _ ->
+      [] ->
         :ets.insert(:partisan_broadcast_messages, {id, payload})
 
         Registry.dispatch(pubsub_name, topic, fn entries ->
@@ -27,6 +24,9 @@ defmodule Phoenix.PubSub.Partisan.BroadcastHandler do
         end)
 
         true
+
+      _ ->
+        false
     end
   end
 
@@ -34,8 +34,8 @@ defmodule Phoenix.PubSub.Partisan.BroadcastHandler do
   # `false' otherwise
   def is_stale(id) do
     case :ets.lookup(:partisan_broadcast_messages, id) do
-      result when is_list(result) and length(result) > 0 -> true
-      _ -> false
+      [] -> false
+      _ -> true
     end
   end
 
@@ -44,8 +44,8 @@ defmodule Phoenix.PubSub.Partisan.BroadcastHandler do
   # associated with the given message id. In this case, `stale' is returned.
   def graft(id) do
     case :ets.lookup(:partisan_broadcast_messages, id) do
+      [] -> nil
       [{_message_id, payload}, _] -> payload
-      _ -> nil
     end
   end
 
