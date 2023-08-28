@@ -15,21 +15,27 @@ defmodule Phoenix.PubSub.Partisan.BroadcastHandler do
   # Given the message id and payload, merge the message in the local state.
   # If the message has already been received return `false', otherwise return `true'
   def merge(id, %{message: message, pubsub_name: pubsub_name, topic: topic} = payload) do
-    :ets.insert(:partisan_broadcast_messages, {id, payload})
+    case :ets.lookup(:partisan_broadcast_messages, id) do
+      result when result != [] ->
+        false
 
-    Registry.dispatch(pubsub_name, topic, fn entries ->
-      for {pid, _} <- entries, do: send(pid, {:broadcast, message})
-    end)
+      _ ->
+        :ets.insert(:partisan_broadcast_messages, {id, payload})
 
-    true
+        Registry.dispatch(pubsub_name, topic, fn entries ->
+          for {pid, _} <- entries, do: send(pid, {:broadcast, message})
+        end)
+
+        true
+    end
   end
 
   # Return true if the message (given the message id) has already been received.
   # `false' otherwise
   def is_stale(id) do
     case :ets.lookup(:partisan_broadcast_messages, id) do
-      result when result != [] -> false
-      _ -> true
+      result when result != [] -> true
+      _ -> false
     end
   end
 
