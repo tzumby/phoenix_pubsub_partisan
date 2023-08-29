@@ -47,11 +47,8 @@ defmodule Phoenix.PubSub.Partisan.BroadcastHandler do
   # Return the message associated with the given message id. In some cases a
   # message has already been sent with information that subsumes the message
   # associated with the given message id. In this case, `stale' is returned.
-  def graft(id) do
-    case :ets.lookup(:partisan_broadcast_messages, id) do
-      [] -> :ok
-      [{_message_id, _payload}, _] -> :stale
-    end
+  def graft(_id) do
+    :stale
   end
 
   # Trigger an exchange between the local handler and the handler on the given
