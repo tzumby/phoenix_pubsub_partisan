@@ -13,7 +13,7 @@ defmodule Phoenix.PubSub.Partisan.BroadcastHandler do
   # Return the channel to be used when broadcasting data associate with this
   # handler
   def broadcast_channel() do
-    :undefined
+    :pubsub
   end
 
   # Given the message id and payload, merge the message in the local state.
