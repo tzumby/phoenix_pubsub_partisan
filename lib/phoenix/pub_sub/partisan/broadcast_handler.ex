@@ -4,9 +4,7 @@ defmodule Phoenix.PubSub.Partisan.BroadcastHandler do
   # Return a two-tuple of message id and payload from a given broadcast
   # This is called by the broadcast/2 method of partisan_plumtree_broadcast.erl
   # module 
-  def broadcast_data(data) do
-    id = UUID.uuid4()
-
+  def broadcast_data(%{id: id} = data) do
     {id, data}
   end
 
@@ -28,11 +26,11 @@ defmodule Phoenix.PubSub.Partisan.BroadcastHandler do
           for {pid, _} <- entries, do: send(pid, {:broadcast, message})
         end)
 
-      _ ->
-        :noop
-    end
+        true
 
-    false
+      _ ->
+        false
+    end
   end
 
   # Return true if the message (given the message id) has already been received.
@@ -47,8 +45,11 @@ defmodule Phoenix.PubSub.Partisan.BroadcastHandler do
   # Return the message associated with the given message id. In some cases a
   # message has already been sent with information that subsumes the message
   # associated with the given message id. In this case, `stale' is returned.
-  def graft(_id) do
-    :stale
+  def graft(id) do
+    case :ets.lookup(:partisan_broadcast_messages, id) do
+      [] -> {:error, {:not_found, id}}
+      [{_id, message}] -> {:ok, message}
+    end
   end
 
   # Trigger an exchange between the local handler and the handler on the given
