@@ -1,6 +1,8 @@
 defmodule Phoenix.PubSub.Partisan.BroadcastHandler do
   @behaviour :partisan_plumtree_broadcast_handler
 
+  require Logger
+
   # Return a two-tuple of message id and payload from a given broadcast
   # This is called by the broadcast/2 method of partisan_plumtree_broadcast.erl
   # module 
@@ -18,6 +20,10 @@ defmodule Phoenix.PubSub.Partisan.BroadcastHandler do
   # If the message has already been received return `false', otherwise return `true'
   # # Called by handle_cast({:broadcast, ...}) in partisan_plumtree_broadcast.erl 
   def merge(id, %{message: message, pubsub_name: pubsub_name, topic: topic} = payload) do
+    Logger.info(
+      "Merging message #{inspect(id)}, #{inspect(payload)} on node: #{inspect(:partisan.node())}"
+    )
+
     case :ets.lookup(:partisan_broadcast_messages, id) do
       [] ->
         :ets.insert(:partisan_broadcast_messages, {id, payload})
@@ -36,6 +42,8 @@ defmodule Phoenix.PubSub.Partisan.BroadcastHandler do
   # Return true if the message (given the message id) has already been received.
   # `false' otherwise
   def is_stale(id) do
+    Logger.info("is_stale #{inspect(id)} on node: #{inspect(:partisan.node())}")
+
     case :ets.lookup(:partisan_broadcast_messages, id) do
       [] -> false
       _ -> true
@@ -46,6 +54,8 @@ defmodule Phoenix.PubSub.Partisan.BroadcastHandler do
   # message has already been sent with information that subsumes the message
   # associated with the given message id. In this case, `stale' is returned.
   def graft(id) do
+    Logger.info("graft #{inspect(id)} on node: #{inspect(:partisan.node())}")
+
     case :ets.lookup(:partisan_broadcast_messages, id) do
       [] -> {:error, {:not_found, id}}
       [{_id, message}] -> {:ok, message}
